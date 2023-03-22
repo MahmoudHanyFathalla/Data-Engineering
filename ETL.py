@@ -26,7 +26,7 @@ def transform(extracted_df, exchange_rate):
     transformed_df = transformed_df.rename(columns={'Dollar': 'Market Cap (GBP$ Billion)'})
     
     return transformed_df
-
+#load
 def load(df_to_load, filename):
     df_to_load.to_csv(filename)
 
