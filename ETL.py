@@ -5,6 +5,10 @@ from datetime import datetime
 
 #df = pd.read_json('C:\\Users\\hp\\Desktop\\ETL\\a.json')
 #display(df)
+#
+#
+#
+#
 columns            = ['Name','Market Cap (US$ Billion)']
 market_cap_file    = 'C:\\Users\\hp\\Desktop\\ETL\\a.json'
 exchange_rate_file = 'C:\\Users\\hp\\Desktop\\ETL\\c.csv'
