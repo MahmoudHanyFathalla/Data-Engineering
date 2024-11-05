@@ -1,0 +1,190 @@
+```
+# 1. Setup and Library Installation
+# ================================
+install.packages(c("readr", "dplyr", "tidyverse", "ggplot2", "caret", "gmodels", "class"), 
+                include_dependencies = TRUE)
+library(readr)      
+library(dplyr)      
+library(tidyverse)  
+library(ggplot2)    
+library(caret)      
+library(gmodels)    
+library(class)      
+
+# 2. Data Loading and Basic Operations
+# ==================================
+# Load datasets
+data(mtcars)
+airbnb <- read.csv("Airbnb_Open_Data.csv")
+houses <- read.csv("Houses.csv")
+titanic <- read.csv("Titanic.csv")
+wbcd <- read.csv("wisc_bc_data.csv", stringsAsFactors = FALSE)
+
+# Removing the ID column from wbcd for analysis
+wbcd <- wbcd[-1]
+
+# Basic exploratory functions to understand dataset structure
+head(airbnb, 3)
+glimpse(houses)
+dim(titanic)
+str(mtcars)
+
+# Display class distribution for wbcd dataset
+table(wbcd$diagnosis)
+
+# 3. Data Cleaning
+# ===============
+
+# Clean dataset function
+clean_dataset <- function(df) {
+    df <- df %>% distinct()
+    numeric_cols <- sapply(df, is.numeric)
+    df[numeric_cols] <- lapply(df[numeric_cols], function(x) {
+        ifelse(is.na(x), mean(x, na.rm = TRUE), x)
+    })
+    character_cols <- sapply(df, is.character)
+    df[character_cols] <- lapply(df[character_cols], tolower)
+    return(df)
+}
+
+# Example: Clean the mtcars dataset
+clean_mtcars <- clean_dataset(mtcars)
+
+# 4. Data Manipulation with dplyr
+# ==============================
+mtcars_analysis <- mtcars %>%
+    filter(cyl > 4) %>%
+    group_by(cyl) %>%
+    summarise(
+        avg_mpg = mean(mpg),
+        max_hp = max(hp),
+        count = n()
+    ) %>%
+    arrange(desc(avg_mpg))
+
+car_stats <- mtcars %>%
+    mutate(
+        efficiency = mpg/wt,
+        power_ratio = hp/wt
+    ) %>%
+    select(mpg, wt, efficiency, power_ratio) %>%
+    arrange(desc(efficiency))
+
+# 5. Statistical Analysis
+# =====================
+calculate_statistics <- function(data, column) {
+    stats <- list(
+        mean = mean(data[[column]], na.rm = TRUE),
+        median = median(data[[column]], na.rm = TRUE),
+        sd = sd(data[[column]], na.rm = TRUE),
+        min = min(data[[column]], na.rm = TRUE),
+        max = max(data[[column]], na.rm = TRUE)
+    )
+    return(stats)
+}
+
+mpg_stats <- calculate_statistics(mtcars, "mpg")
+correlation_matrix <- cor(mtcars[, c("mpg", "wt", "hp", "disp")])
+
+# 6. Data Visualization
+# ====================
+create_visualizations <- function(data, x_var, y_var) {
+    scatter_plot <- ggplot(data, aes_string(x = x_var, y = y_var)) +
+        geom_point() +
+        geom_smooth(method = "lm") +
+        theme_minimal() +
+        labs(title = paste("Scatter Plot:", x_var, "vs", y_var))
+    
+    box_plot <- ggplot(data, aes_string(x = factor(1), y = y_var)) +
+        geom_boxplot() +
+        theme_minimal() +
+        labs(title = paste("Box Plot of", y_var))
+    
+    hist_plot <- ggplot(data, aes_string(x = x_var)) +
+        geom_histogram(bins = 30) +
+        theme_minimal() +
+        labs(title = paste("Histogram of", x_var))
+    
+    return(list(scatter = scatter_plot, box = box_plot, hist = hist_plot))
+}
+
+plots <- create_visualizations(mtcars, "wt", "mpg")
+print(plots$scatter)
+
+# 7. Machine Learning with wbcd (Breast Cancer Data)
+# =================================================
+
+# Convert the diagnosis column to a factor for classification
+wbcd$diagnosis <- factor(wbcd$diagnosis, levels = c("B", "M"), labels = c("Benign", "Malignant"))
+
+# Normalization function
+normz <- function(x) {
+    return((x - min(x)) / (max(x) - min(x)))
+}
+
+# Normalize features (excluding diagnosis column)
+wbcdn <- data.frame(lapply(wbcd[2:31], normz))
+
+# Split the data into training (80%) and testing (20%) sets
+train_size <- round(nrow(wbcdn) * 0.8)
+wbcd_train <- wbcdn[1:train_size, ]
+wbcd_test <- wbcdn[(train_size + 1):nrow(wbcdn), ]
+wbcd_train_labels <- wbcd[1:train_size, 1]
+wbcd_test_labels <- wbcd[(train_size + 1):nrow(wbcd), 1]
+
+# k-Nearest Neighbors (k-NN) Model
+wbcd_test_pred <- knn(train = wbcd_train, test = wbcd_test, cl = wbcd_train_labels, k = 8)
+
+# Evaluate the model with a cross table
+CrossTable(x = wbcd_test_labels, y = wbcd_test_pred, prop.chisq = FALSE)
+
+# 8. Cross Validation for mtcars Regression
+# =========================================
+perform_cv <- function(data, target, features, method = "lm", k = 10) {
+    formula <- as.formula(paste(target, "~", paste(features, collapse = " + ")))
+    cv_model <- train(
+        form = formula,
+        data = data,
+        method = method,
+        trControl = trainControl(method = "cv", number = k)
+    )
+    return(cv_model)
+}
+
+cv_results <- perform_cv(mtcars, "mpg", c("wt", "hp", "cyl"))
+
+# 9. Reporting Results
+# ===================
+generate_report <- function(data, analysis_results) {
+    cat("=== Analysis Report ===\n\n")
+    cat("Dataset Summary:\n")
+    print(summary(data))
+    cat("\nAnalysis Results:\n")
+    if (!is.null(analysis_results$model)) {
+        cat("\nModel Summary:\n")
+        print(summary(analysis_results$model))
+    }
+    if (!is.null(analysis_results$accuracy)) {
+        cat("\nModel Accuracy:", analysis_results$accuracy, "\n")
+    }
+    if (!is.null(analysis_results$rmse)) {
+        cat("\nRoot Mean Square Error:", analysis_results$rmse, "\n")
+        cat("R-squared:", analysis_results$r_squared, "\n")
+    }
+}
+
+generate_report(mtcars, mtcars_lm)
+
+# 10. Save Results
+# ===============
+save_results <- function(results, filename) {
+    if (is.data.frame(results)) {
+        write.csv(results, paste0(filename, ".csv"), row.names = FALSE)
+    } else {
+        saveRDS(results, paste0(filename, ".rds"))
+    }
+}
+
+save_results(mtcars_analysis, "car_analysis_results")
+
+```
