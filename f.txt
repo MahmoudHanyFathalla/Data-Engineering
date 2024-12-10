@@ -1,0 +1,211 @@
+getwd()
+setwd("D:/rere/R_Data")
+subjectID <- c(1:10)
+age <- c(37,23,42,25,22,25,48,19,22,38)
+gender <- c("male","male","male","male","male","female","female","female","female","female")
+lifesat <- c(9,7,8,10,4,10,8,7,8,9)
+health <- c("good","average","average","good","poor","average","good","poor","average","good")
+paid <-c(T,F,F,T,T,T,F,F,F,T)
+dataset <- data.frame(subjectID,age,gender,lifesat,health,paid)
+dataset
+ls()
+save.image(file="save_load.RData")
+ls()
+rm(list=ls())
+load("save_load.RData")
+save(dataset,age,file= "dataset.RData")
+rm(list=ls())
+load("dataset.RData")
+cat(age,file="age.txt",sep = ",",fill = TRUE,labels = NULL,append = TRUE)
+cat(age,file="age.csv",sep ="",fill = TRUE,labels = NULL,append = TRUE)
+write(age,file="agedata.txt",ncolumns = 2, sep=",",append = TRUE)
+y <- matrix(1:20,nrow=5,ncol=4)
+y
+write(y,file="ydata.txt",ncolumns = 4,append=FALSE,sep="\t")
+write(y,file="ydata.csv",ncolumns = 4,append=FALSE,sep=",")
+
+#graphics
+getwd()
+data("mtcars")
+#creating a scattar plot
+plot(mtcars$wt,mtcars$mpg)
+
+library(ggplot2)
+ggplot()
+
+#ggplot(data = mtcars, aes(x = wt, y = mpg)) +
+#  geom_point() +
+#  labs(title = "Scatter Plot of Weight vs MPG", x = "Weight (1000 lbs)", y = "Miles per Gallon") +
+#  theme_minimal()
+
+
+
+A=1:5
+B=LETTERS[1:5]
+C=c(T,F,T,F,T)
+df <- data.frame(A,B,C)
+df
+###################
+df1 <- data.frame(A=1:5,B=LETTERS[1:5],C=c(T,F,T,F,T))
+df1 
+###################
+Subset_df <- subset(df,A>2 & C==T)
+Subset_df
+###################
+Subset_df2 <- df[df$A>2 & df & C == TRUE,  ] 
+Subset_df2
+##################
+library(dplyr)
+Subset_df3
+
+#creating a scatter plot
+getwd()
+setwd("d:/rere/R_Data")
+data("mtcars")
+plot(mtcars$wt, mtcars$mpg)
+#we can get similar result using ggplot
+ggplot(mtcars, aes(x=wt,y=mpg))
+ggplot(mtcars, aes(x=wt,y=mpg)) + geom_point()
+ggplot(NULL, aes(x=mtcars$wt,y=mtcars$mpg)) + geom_point() #another solution
+#creating a line graph
+data("pressure")
+plot(pressure$temperature, pressure$pressure , type="l")
+points(pressure$temperature, pressure$pressure)
+points(pressure$temperature, pressure$pressure*4)
+lines(pressure$temperature, pressure$pressure/2, col = "red")
+points(pressure$temperature, pressure$pressure/2, col = "red")
+lines(pressure$temperature, pressure$pressure*2, col = "blue")
+points(pressure$temperature, pressure$pressure*2, col = "green")
+#################################################################
+curve(x^3 -5*x, from = -4 ,to = 4)
+myfun <- function(x){
+  1/(1+exp(-x+10))
+}
+curve(myfun, from=0, to= 20)
+curve(1-myfun(x), add=TRUE,col="pink")
+#with ggplot2 you can get a similar result
+data("pressure")
+library(ggplot2)
+ggplot(pressure, aes(x= temperature , y= pressure))  +geom_line()
+ggplot(pressure, aes(x= temperature , y= pressure))  +geom_line() + geom_point() #line w aleh point
+
+
+
+
+
+curve(x^3-5*x,from=-4,to=4)
+myfun <-function(x){
+  1/(1+exp(-x+10))
+}
+curve(myfun, from=0,to=20)
+curve(1-myfun(x),add = TRUE ,col="red")
+curve((1-myfun(x))/2,add = TRUE ,col="blue")
+curve(x/20,add = TRUE ,col="green")
+##########################################
+install.packages("gcookbook")
+library(gcookbook)
+library(ggplot2)
+data("pg_mean")
+ggplot(pg_mean,aes(x=group,y=weight)) + geom_col()
+data("cabbage_exp")
+ggplot(cabbage_exp,aes(x=Date, y=Weight, fill = Cultivar)) +geom_col()
+ggplot(cabbage_exp,aes(x=Date, y=Weight, fill = Cultivar)) +geom_col(position = "dodge")
+ggplot(cabbage_exp,aes(x=Date, y=Weight, fill = Cultivar)) +geom_col(position = "dodge",colour="black")
+ggplot(cabbage_exp,aes(x=Date, y=Weight, fill = Cultivar)) +
+  geom_col(position = "dodge",colour="black")+ scale_fill_brewer(palette = "Pastel1")
+ggplot(cabbage_exp,aes(x=Date, y=Weight, fill = Cultivar)) +
+  geom_col(position = "dodge",colour="black")+ scale_fill_brewer(palette = "Pastel2")
+########################################
+library(gcookbook)
+library(dplyr)
+data("uspopchange")
+upc <- uspopchange %>% 
+  arrange(desc(Change)) %>% 
+  slice(1:10)
+View(upc)
+ggplot(upc,aes(x=Abb,y=Change,fill=Region))+
+  geom_col(colour="black")
+ggplot(upc,aes(x=Abb,y=Change,fill=Region))+
+  geom_col(colour="black")+
+  scale_fill_manual(values = c("green","yellow"))+
+  xlab("State") + ylab("The Change")
+
+
+
+
+#using colors in bar graph
+library(gcookbook)
+data("uspopchange")
+View(uspopchange)       
+library(dplyr)
+upc <- uspopchange %>% 
+  arrange(desc(Change)) %>% 
+  slice(1:10)                #momkn ast5dem head function aw slice ashan a pick awel 10 values
+View(upc)
+
+library(ggplot2)
+ggplot(upc,aes(x=Abb,y=Change, fill = Region)) + geom_col()
+#if i want to change the colors do the following
+ggplot(upc,aes(x=Abb,y=Change, fill = Region)) +scale_fill_manual(values = c("pink","red"))+ geom_col()
+#3ashan a7aded kol bar be khat eswed do the following
+ggplot(upc,aes(x=Abb,y=Change, fill = Region)) +scale_fill_manual(values = c("pink","red"))+ geom_col(color = "black")
+# to adjust the name of labels x and y do the following
+ggplot(upc,aes(x=Abb,y=Change, fill = Region)) +scale_fill_manual(values = c("pink","red"))+ geom_col(color = "blue")+
+  xlab("state")+ylab("the change")
+#law ana ayza arateb el bars mn el soghyar lel kbeer mn gher ma arg3 w a sort el data 
+ggplot(upc,aes(x=reorder(Abb,Change),y=Change, fill = Region)) +scale_fill_manual(values = c("pink","red"))+ geom_col(color = "blue")+
+  xlab("state")+ylab("the change") 
+#LAW AYZA ARATEBHA MN KBEER LEL SOGHYAR
+ggplot(upc,aes(x=reorder(Abb,-Change),y=Change, fill = Region)) +scale_fill_manual(values = c("pink","red"))+ geom_col(color = "blue")+
+  xlab("state")+ylab("the change")
+#law ande curve w ayza a3ml el goz2 el +ve be loon wl -ve be loon tany
+data("climate")
+View(climate)
+#hna ana bakhtar hagat mo3yna bl filter w bazawed col yshel el values positive wla negative
+climate_sub <- climate %>% 
+  filter(Source=="Berkeley" & Year >= 1900) %>% 
+  mutate(positive = Anomaly10y >= 0)
+View (climate_sub)
+ggplot(climate_sub,aes(x=Year,y=Anomaly10y, fill = positive)) + geom_col(color = "blue")
+#law ayza a adjust el colors
+ggplot(climate_sub,aes(x=Year,y=Anomaly10y, fill = positive)) +scale_fill_manual(values = c("pink","red"))+ geom_col(color = "black")
+
+
+
+
+
+
+setwd("e:/R_Data")
+wbcd <- read.csv("wisc_bc_data.csv", stringsAsFactors = FALSE)
+str(wbcd)
+table(wbcd$diagnosis)
+wbcd <-wbcd[-1]
+wbcd$diagnosis <-factor(wbcd$diagnosis,levels = c("B", "M"), 
+                        labels =c("Benign", "Malignant"))
+table(wbcd$diagnosis)
+normalize <-function(x){
+  return((x - min(x))/(max(x)- min(x)))
+}
+normalize(c(1,2,3,4,5))
+normalize(c(10,20,30,40,50))
+wbcd_n1<-lapply(wbcd[2:31], normalize)
+wbcd_n1
+wbcd_n<-as.data.frame(lapply(wbcd[2:31], normalize))
+
+wbcd_train <-wbcd_n[1:469, ]
+wbcd_test <-wbcd_n[470:569, ]
+
+wbcd_train_labels <-wbcd[1:469, 1]
+wbcd_train_labels
+wbcd_test_labels <-wbcd[470:569, 1]
+wbcd_test_labels
+
+install.packages("class")
+library(class)
+wbcd_test_pred <-knn(train=wbcd_train, test=wbcd_test, 
+                     cl=wbcd_train_labels, k=21)
+wbcd_test_pred
+
+install.packages("gmodels")
+library(gmodels)
+CrossTable(x=wbcd_test_labels, y=wbcd_test_pred, prop.chisq = FALSE)
