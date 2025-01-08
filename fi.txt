@@ -1,0 +1,1192 @@
+# ==================================================
+# File: lec_2.R
+# ==================================================
+
+# 1. Variable Assignment and Basic Operations
+# -------------------------------------------
+Name <- 1  # Assign the value 1 to the variable `Name`
+name <- 0  # Assign the value 0 to the variable `name` (case-sensitive)
+my_number <- 1  # Assign the value 1 to the variable `my_number`
+my_number <- 999  # Reassign the value 999 to `my_number`
+ls()  # List all variables in the current environment
+
+# 2. Vector Operations
+# --------------------
+die <- 1:6  # Create a vector of numbers from 1 to 6
+die - 1  # Subtract 1 from each element in the vector
+die / 2  # Divide each element by 2
+die + 1:4  # Add elements of 1:4 to `die` (recycling occurs)
+die * die  # Multiply each element by itself (element-wise multiplication)
+die %*% die  # Compute the dot product of `die` with itself
+die %o% die  # Compute the outer product of `die` with itself
+
+# 3. Mathematical Functions
+# -------------------------
+mean(1:6)  # Calculate the mean of numbers 1 to 6
+factorial(3)  # Compute the factorial of 3 (3! = 6)
+mean(die)  # Calculate the mean of the `die` vector
+round(mean(die))  # Round the mean of `die` to the nearest integer
+args(round)  # Display the arguments of the `round` function
+round(pi, digits = 3)  # Round the value of pi to 3 decimal places
+
+# 4. Random Sampling
+# ------------------
+sample(die, size = 2)  # Randomly sample 2 numbers from `die` without replacement
+sample(die, size = 2, replace = TRUE)  # Randomly sample 2 numbers with replacement
+
+# ==================================================
+# File: lec2_2.R
+# ==================================================
+
+# 5. Set Working Directory and Load Data
+# --------------------------------------
+getwd()  # Get the current working directory
+setwd("E:/study/Big data")  # Set the working directory to "E:/study/Big data"
+getwd()  # Verify the new working directory
+
+# 6. Load and Inspect Data
+# ------------------------
+usedcars <- read.csv("usedcars.csv", stringsAsFactors = FALSE)  # Load the CSV file
+str(usedcars)  # Display the structure of the dataset
+head(usedcars)  # Display the first few rows of the dataset
+
+# 7. Descriptive Statistics
+# -------------------------
+mean(usedcars$price)  # Calculate the mean price of used cars
+range(usedcars$price)  # Get the minimum and maximum prices
+median(c(1, 2, 3, 4))  # Calculate the median of the vector (2.5)
+quantile(usedcars$price)  # Compute the quartiles of the price column
+summary(usedcars$year)  # Get a summary of the year column
+summary(usedcars[c("price", "mileage")])  # Summarize multiple columns
+
+# ==================================================
+# File: section3_bigdata.R
+# ==================================================
+
+# 13. Install and Load Required Packages
+# --------------------------------------
+install.packages("readr", include_dependencies = TRUE)  # Install the readr package
+install.packages("dplyr", include_dependencies = TRUE)  # Install the dplyr package
+library(readr)  # Load the readr package
+library(dplyr)  # Load the dplyr package
+
+# 14. Set Working Directory and Load Data
+# ---------------------------------------
+getwd()  # Get the current working directory
+setwd("C:/rere/R_Data")  # Set the working directory
+df <- read.csv("airline_2m.csv", stringsAsFactors = FALSE)  # Load the dataset
+View(df)  # View the dataset
+
+# 15. Subset and Clean Data
+# -------------------------
+df <- df[1:500000, ]  # Keep only the first 500,000 rows
+df <- subset(df, select = c('Year', 'Month', 'Reporting_Airline', 'OriginCityName', 
+                            'DestCityName', 'ArrDelayMinutes', 'AirTime', 'DepDelayMinutes', 'Distance'))
+colnames(df)  # Display column names
+
+# 16. Calculate Mean and Average Delays
+# -------------------------------------
+mean(df$Year)  # Calculate the mean of the Year column
+mean(df$DepDelayMinutes, na.rm = TRUE)  # Calculate the mean of DepDelayMinutes, ignoring NA values
+avgDelay <- tapply(df$DepDelayMinutes, df$Reporting_Airline, mean, na.rm = TRUE)  # Calculate average delay by airline
+delay <- data.frame(airlines = names(avgDelay), average = avgDelay)  # Convert to a data frame
+View(delay)  # View the result
+
+# 17. Data Manipulation with dplyr
+# --------------------------------
+df %>%
+  filter(Year == 2010) %>%  # Filter rows where Year is 2010
+  select(Year, DestCityName, AirTime)  # Select specific columns
+
+df %>%
+  group_by(Reporting_Airline) %>%  # Group by airline
+  summarize(DepDelay = mean(DepDelayMinutes, na.rm = TRUE), ArrDelay = mean(ArrDelayMinutes, na.rm = TRUE)) %>%
+  arrange(desc(DepDelay), desc(ArrDelay))  # Sort by delays in descending order
+
+df %>%
+  filter(Month == 1 | Month == 2 & AirTime > 0) %>%  # Filter rows for January or February with positive AirTime
+  mutate(speed = Distance / AirTime) %>%  # Calculate speed
+  select(Month, Distance, AirTime) %>%  # Select specific columns
+  arrange(speed) %>%  # Sort by speed
+  head(3)  # Display the top 3 rows
+
+
+# ==================================================
+# File: lecture3_bigdata_bgdd.R
+# ==================================================
+
+# 1. Set Working Directory and Load Data
+# --------------------------------------
+getwd()  # Get the current working directory
+setwd("C:/rere/R_Data")  # Set the working directory to "C:/rere/R_Data"
+getwd()  # Verify the new working directory
+
+# 2. Load and Inspect Data
+# ------------------------
+wbcd <- read.csv("wisc_bc_data.csv", stringsAsFactors = FALSE)  # Load the dataset
+str(wbcd)  # Display the structure of the dataset
+wbcd <- wbcd[-1]  # Remove the first column (ID column)
+str(wbcd)  # Check the structure after removal
+head(wbcd)  # Display the first 6 rows of the dataset
+
+# 3. Convert Diagnosis Column to Factor
+# -------------------------------------
+table(wbcd$diagnosis)  # Count the occurrences of each diagnosis
+wbcd$diagnosis <- factor(wbcd$diagnosis, levels = c("B", "M"), labels = c("benign", "malignant"))
+table(wbcd$diagnosis)  # Verify the conversion
+# Explanation: The `diagnosis` column is converted to a factor with levels "benign" and "malignant".
+
+# 4. Normalize Data
+# -----------------
+normalize <- function(x) {
+  return((x - min(x)) / (max(x) - min(x)))
+}  # Define a function to normalize data to a range of 0 to 1
+normalize(c(1, 2, 3, 4, 5))  # Test the function
+
+# Apply normalization to all numeric columns (columns 2 to 31)
+wbcd_n <- as.data.frame(lapply(wbcd[2:31], normalize))
+View(wbcd_n)  # View the normalized dataset
+
+
+# ==================================================
+# File: lecture4_bigdata.R
+# ==================================================
+
+# 7. Load and Prepare Data for Machine Learning
+# ---------------------------------------------
+setwd("C:/rere/R_Data")  # Set the working directory
+wbcd <- read.csv("wisc_bc_data.csv", stringsAsFactors = FALSE)  # Load the dataset
+str(wbcd)  # Display the structure of the dataset
+View(wbcd)  # View the dataset
+table(wbcd$diagnosis)  # Count the occurrences of each diagnosis
+
+# 8. Convert Diagnosis Column to Factor
+# -------------------------------------
+wbcd <- wbcd[-1]  # Remove the first column (ID column)
+wbcd$diagnosis <- factor(wbcd$diagnosis, levels = c("B", "M"), labels = c("benign", "malignant"))
+# Explanation: The `diagnosis` column is converted to a factor for machine learning.
+
+# 9. Normalize Data
+# -----------------
+normalize <- function(x) {
+  return((x - min(x)) / (max(x) - min(x)))
+}  # Define a normalization function
+wbcd_n <- as.data.frame(lapply(wbcd[2:31], normalize))  # Apply normalization to numeric columns
+
+# 10. Split Data into Training and Testing Sets
+# ---------------------------------------------
+wbcd_train <- wbcd_n[1:469, ]  # Use 80% of the data for training
+wbcd_test <- wbcd_n[470:569, ]  # Use 20% of the data for testing
+wbcd_train_labels <- wbcd[1:469, 1]  # Extract training labels (diagnosis)
+wbcd_test_labels <- wbcd[470:569, 1]  # Extract testing labels (diagnosis)
+
+# 11. Perform k-Nearest Neighbors (k-NN) Classification
+# -----------------------------------------------------
+install.packages("class")  # Install the class package
+library(class)  # Load the class package
+wbcd_test_pred <- knn(train = wbcd_train, test = wbcd_test, cl = wbcd_train_labels, k = 21)
+# Explanation: Perform k-NN classification with k = 21.
+
+# 12. Evaluate Model Performance
+# ------------------------------
+install.packages("gmodels")  # Install the gmodels package
+library(gmodels)  # Load the gmodels package
+CrossTable(x = wbcd_test_labels, y = wbcd_test_pred, prop.chisq = FALSE)
+# Explanation: Create a cross-tabulation to compare predicted and actual labels.
+
+# ==================================================
+# File: lecture4.1_bigdata.R
+# ==================================================
+
+# 5. Load and Filter Starwars Data
+# --------------------------------
+data()  # List available datasets
+install.packages("tidyverse")  # Install the tidyverse package
+library(tidyverse)  # Load the tidyverse package
+View(starwars)  # View the starwars dataset
+
+# 6. Data Manipulation with dplyr
+# -------------------------------
+starwars %>%
+  filter(height > 150 & mass < 200) %>%  # Filter rows where height > 150 and mass < 200
+  mutate(height_in_meters = height / 100) %>%  # Create a new column for height in meters
+  select(height_in_meters, mass) %>%  # Select only the height and mass columns
+  arrange(-mass) %>%  # Sort by mass in descending order
+  view()  # View the result
+# Explanation: This pipeline filters, transforms, selects, and sorts the starwars dataset.
+
+
+# ==================================================
+# File: lect5_bigdata.R
+# ==================================================
+
+# 12. Filtering and Selecting Data
+# --------------------------------
+library(dplyr)  # Load the dplyr package
+data(mtcars)  # Load the mtcars dataset
+
+# Filter rows where `mpg` is greater than 20 and select the `mpg` and `hp` columns
+xx <- filter(mtcars, mpg > 20)
+yy <- select(xx, mpg, hp)  # In two steps
+
+# Perform the same operation in one line
+result_2_usual <- select(filter(mtcars, mpg > 20), mpg, hp)
+
+# Using the pipe operator
+result_pipe <- mtcars %>% filter(mpg > 20) %>% select(mpg, hp)
+
+# 13. Grouping and Summarizing Data
+# ---------------------------------
+# Group the dataset by `cyl` and calculate the average `mpg` for each group
+xx <- group_by(mtcars, cyl)
+result_2a_usual <- summarize(xx, avg_mpg = mean(mpg))
+
+# Perform the same operation in one line
+result_2a_usual <- summarise(group_by(mtcars, cyl), avg_mpg = mean(mpg))
+
+# Using the pipe operator
+result_pipe <- mtcars %>% group_by(cyl) %>% summarize(avg_mpg = mean(mpg))
+
+# ==================================================
+# File: lect5.1_bigdata.R
+# ==================================================
+
+# 8. Creating New Columns with dplyr
+# ----------------------------------
+library(dplyr)  # Load the dplyr package
+data(mtcars)  # Load the mtcars dataset
+
+# Create a new column `weight_kg` by multiplying `wt` by 2
+result_1_usual <- mutate(mtcars, weight_kg = wt * 2)
+result_pipe <- mtcars %>% mutate(weight_kg = wt * 2)  # Same operation using the pipe operator
+
+# 9. Sorting Data
+# ---------------
+# Sort the dataset by `hp` in descending order and select the top 10 rows
+result_pipe <- mtcars %>% arrange(desc(hp)) %>% head(10)
+
+# Sort the dataset by `hp` in ascending order and select the top 10 rows
+result_1_pipe <- mtcars %>% arrange(hp) %>% head(10)
+
+# 10. Combining Multiple Functions
+# --------------------------------
+# Filter rows where `cyl` is 6 and calculate the average `hp` and `mpg`
+result_6_pipe <- mtcars %>% filter(cyl == 6) %>% summarize(avg_hp = mean(hp), avg_mpg = mean(mpg))
+
+# Without using the pipe operator
+result_6_usual <- summarize(filter(mtcars, cyl == 6), avg_hp = mean(hp), avg_mpg = mean(mpg))
+
+# 11. Applying Functions to Lists
+# -------------------------------
+num_list <- list(a = 1:5, b = 6:10, c = 11:15)  # Create a list of numeric vectors
+mean_function <- function(x) mean(x)  # Define a function to calculate the mean
+
+# Apply the mean function to each element in the list using `lapply`
+result_lapply <- lapply(num_list, mean_function)
+
+# Apply the mean function to each element in the list using `sapply`
+result_sapply <- sapply(num_list, mean_function)
+
+
+# ==================================================
+# File: lecture7_bigdata.R
+# ==================================================
+
+# 6. Set Working Directory
+# ------------------------
+getwd()
+setwd("D:/rere/R_Data")
+# Explanation: Sets the working directory to "D:/rere/R_Data", where files will be saved or loaded from.
+
+# 7. Create a Dataset
+# -------------------
+subjectID <- c(1:10)
+age <- c(37, 23, 42, 25, 22, 25, 48, 19, 22, 38)
+gender <- c("male", "male", "male", "male", "male", "female", "female", "female", "female", "female")
+lifesat <- c(9, 7, 8, 10, 4, 10, 8, 7, 8, 9)
+health <- c("good", "average", "average", "good", "poor", "average", "good", "poor", "average", "good")
+paid <- c(T, F, F, T, T, T, F, F, F, T)
+dataset <- data.frame(subjectID, age, gender, lifesat, health, paid)
+dataset
+# Explanation: Creates a dataset with columns for subject ID, age, gender, life satisfaction, health, and payment status.
+
+# 8. List Objects in Environment
+# ------------------------------
+ls()
+# Explanation: Lists all objects (variables, datasets, etc.) currently in the R environment.
+
+# 9. Save and Load Workspace
+# --------------------------
+save.image(file = "save_load.RData")
+# Explanation: Saves the entire workspace (all objects) to a file named "save_load.RData".
+
+ls()
+rm(list = ls())
+# Explanation: Removes all objects from the environment.
+
+load("save_load.RData")
+# Explanation: Reloads the saved workspace from "save_load.RData".
+
+# 10. Save Specific Objects
+# -------------------------
+save(dataset, age, file = "dataset.RData")
+# Explanation: Saves only the `dataset` and `age` objects to a file named "dataset.RData".
+
+rm(list = ls())
+load("dataset.RData")
+# Explanation: Reloads the `dataset` and `age` objects from "dataset.RData".
+
+# 11. Write Data to Text Files
+# ----------------------------
+cat(age, file = "age.txt", sep = ",", fill = TRUE, labels = NULL, append = TRUE)
+# Explanation: Writes the `age` vector to a text file ("age.txt") with values separated by commas.
+
+cat(age, file = "age.csv", sep = "", fill = TRUE, labels = NULL, append = TRUE)
+# Explanation: Writes the `age` vector to a CSV file ("age.csv") without separators.
+
+write(age, file = "agedata.txt", ncolumns = 2, sep = ",", append = TRUE)
+# Explanation: Writes the `age` vector to a text file ("agedata.txt") with 2 columns and values separated by commas.
+
+# 12. Write Matrix to Files
+# -------------------------
+y <- matrix(1:20, nrow = 5, ncol = 4)
+y
+# Explanation: Creates a 5x4 matrix with values from 1 to 20.
+
+write(y, file = "ydata.txt", ncolumns = 4, append = FALSE, sep = "\t")
+# Explanation: Writes the matrix `y` to a text file ("ydata.txt") with tab-separated values.
+
+write(y, file = "ydata.csv", ncolumns = 4, append = FALSE, sep = ",")
+# Explanation: Writes the matrix `y` to a CSV file ("ydata.csv") with comma-separated values.
+
+# ==================================================
+# File: lect7.1-bigdata.R
+# ==================================================
+
+# 1. Check Working Directory
+# --------------------------
+getwd()
+# Explanation: This function retrieves the current working directory, which is where R will look for files by default.
+
+# 2. Load Built-in Dataset
+# ------------------------
+data("mtcars")
+# Explanation: Loads the built-in `mtcars` dataset, which contains information about car models and their attributes.
+
+# 3. Create a Scatter Plot
+# ------------------------
+plot(mtcars$wt, mtcars$mpg)
+# Explanation: Creates a scatter plot of car weight (`wt`) vs. miles per gallon (`mpg`).
+# Example: The plot shows the relationship between a car's weight and its fuel efficiency.
+
+# 4. Load ggplot2 Library
+# -----------------------
+library(ggplot2)
+# Explanation: Loads the `ggplot2` library, which is used for creating advanced and customizable plots.
+
+# 5. Create a Scatter Plot with ggplot2 (Commented Out)
+# ----------------------------------------------------
+# ggplot(data = mtcars, aes(x = wt, y = mpg)) +
+#   geom_point() +
+#   labs(title = "Scatter Plot of Weight vs MPG", x = "Weight (1000 lbs)", y = "Miles per Gallon") +
+#   theme_minimal()
+# Explanation: This code (if uncommented) would create a more polished scatter plot using `ggplot2` with a title, axis labels, and a minimal theme.
+
+# ==================================================
+# File: lect8_bigdata.R
+# ==================================================
+
+# 8. Create a Data Frame
+# ----------------------
+A <- 1:5
+B <- LETTERS[1:5]
+C <- c(T, F, T, F, T)
+df <- data.frame(A, B, C)
+df
+# Explanation: Creates a data frame with columns `A` (numbers 1 to 5), `B` (letters A to E), and `C` (logical values).
+
+# 9. Create a Data Frame Directly
+# -------------------------------
+df1 <- data.frame(A = 1:5, B = LETTERS[1:5], C = c(T, F, T, F, T))
+df1
+# Explanation: Creates the same data frame directly without defining separate vectors.
+
+# 10. Subset a Data Frame
+# -----------------------
+Subset_df <- subset(df, A > 2 & C == TRUE)
+Subset_df
+# Explanation: Subsets the data frame to include only rows where `A > 2` and `C` is `TRUE`.
+
+# Alternative Subsetting Method
+Subset_df2 <- df[df$A > 2 & df$C == TRUE, ]
+Subset_df2
+# Explanation: Uses base R indexing to achieve the same subsetting result.
+
+# 11. Subset a Data Frame with dplyr
+# ----------------------------------
+library(dplyr)
+Subset_df3 <- df %>% filter(A > 2 & C == TRUE)
+Subset_df3
+# Explanation: Uses the `dplyr` package to filter the data frame with the same conditions.
+
+# ==================================================
+# File: lect8.1_bigdata.R
+# ==================================================
+
+# 1. Set Working Directory
+# ------------------------
+getwd()
+setwd("d:/rere/R_Data")
+# Explanation: Sets the working directory to "d:/rere/R_Data", where files will be saved or loaded from.
+
+# 2. Load Built-in Dataset
+# ------------------------
+data("mtcars")
+# Explanation: Loads the built-in `mtcars` dataset, which contains information about car models and their attributes.
+
+# 3. Create a Scatter Plot
+# ------------------------
+plot(mtcars$wt, mtcars$mpg)
+# Explanation: Creates a scatter plot of car weight (`wt`) vs. miles per gallon (`mpg`).
+# Example: The plot shows the relationship between a car's weight and its fuel efficiency.
+
+# 4. Create a Scatter Plot with ggplot2
+# -------------------------------------
+library(ggplot2)
+ggplot(mtcars, aes(x = wt, y = mpg)) + geom_point()
+# Explanation: Creates the same scatter plot using `ggplot2`, which provides more customization options.
+
+# Alternative Solution:
+ggplot(NULL, aes(x = mtcars$wt, y = mtcars$mpg)) + geom_point()
+# Explanation: This is another way to create the scatter plot without explicitly specifying the dataset in `ggplot()`.
+
+# 5. Create a Line Graph
+# ----------------------
+data("pressure")
+plot(pressure$temperature, pressure$pressure, type = "l")
+# Explanation: Creates a line graph of temperature vs. pressure using the `pressure` dataset.
+
+# Add Points to the Line Graph
+points(pressure$temperature, pressure$pressure)
+# Explanation: Adds points to the line graph to highlight the data points.
+
+# Add Additional Lines and Points
+lines(pressure$temperature, pressure$pressure / 2, col = "red")
+points(pressure$temperature, pressure$pressure / 2, col = "red")
+lines(pressure$temperature, pressure$pressure * 2, col = "blue")
+points(pressure$temperature, pressure$pressure * 2, col = "green")
+# Explanation: Adds additional lines and points to the graph with custom colors.
+
+# 6. Plot Mathematical Functions
+# ------------------------------
+curve(x^3 - 5*x, from = -4, to = 4)
+# Explanation: Plots the cubic function \( f(x) = x^3 - 5x \) for \( x \) values from -4 to 4.
+
+# Define a Custom Sigmoid Function
+myfun <- function(x) {
+  1 / (1 + exp(-x + 10))
+}
+curve(myfun, from = 0, to = 20)
+# Explanation: Plots the sigmoid function \( f(x) = \frac{1}{1 + e^{-(x - 10)}} \) for \( x \) values from 0 to 20.
+
+# Add a Flipped Sigmoid Curve
+curve(1 - myfun(x), add = TRUE, col = "pink")
+# Explanation: Adds a vertically flipped version of the sigmoid function in pink.
+
+# 7. Create a Line Graph with ggplot2
+# -----------------------------------
+ggplot(pressure, aes(x = temperature, y = pressure)) + geom_line()
+# Explanation: Creates a line graph of temperature vs. pressure using `ggplot2`.
+
+# Add Points to the Line Graph
+ggplot(pressure, aes(x = temperature, y = pressure)) + geom_line() + geom_point()
+# Explanation: Adds points to the line graph to highlight the data points.
+
+# ==================================================
+# File: lec_9.R
+# ==================================================
+
+# 1. Plotting Mathematical Functions
+# ----------------------------------
+# Plot the cubic function f(x) = x^3 - 5x for x values from -4 to 4.
+curve(x^3 - 5*x, from = -4, to = 4, main = "Cubic Function: x^3 - 5x")
+# Explanation: This shows the behavior of the cubic function, including its roots and turning points.
+
+# 2. Custom Sigmoid Function
+# --------------------------
+# Define a custom sigmoid function: f(x) = 1 / (1 + exp(-x + 10))
+myfun <- function(x) {
+  1 / (1 + exp(-x + 10))
+}
+# Plot the sigmoid function for x values from 0 to 20.
+curve(myfun, from = 0, to = 20, main = "Sigmoid Function: 1 / (1 + exp(-x + 10))")
+# Explanation: The sigmoid function produces an S-shaped curve, often used in logistic regression.
+
+# 3. Adding More Curves
+# ---------------------
+# Add a curve for 1 - myfun(x) in red.
+curve(1 - myfun(x), add = TRUE, col = "red")
+# Explanation: This flips the sigmoid function vertically.
+
+# Add a curve for (1 - myfun(x)) / 2 in blue.
+curve((1 - myfun(x)) / 2, add = TRUE, col = "blue")
+# Explanation: This scales the flipped sigmoid function by 0.5.
+
+# Add a linear curve for x / 20 in green.
+curve(x / 20, add = TRUE, col = "green")
+# Explanation: This adds a straight line with a slope of 1/20.
+
+# ==================================================
+# 4. Bar Plots with ggplot2
+# ==================================================
+
+# Install and load the gcookbook package for example datasets.
+install.packages("gcookbook")
+library(gcookbook)
+library(ggplot2)
+
+# 5. Basic Bar Plot
+# -----------------
+# Plot a bar chart of group weights from the pg_mean dataset.
+data("pg_mean")
+ggplot(pg_mean, aes(x = group, y = weight)) + 
+  geom_col() +
+  ggtitle("Bar Plot of Group Weights")
+
+# 6. Grouped Bar Plot
+# -------------------
+# Plot a grouped bar chart of cabbage weights by Date and Cultivar.
+data("cabbage_exp")
+ggplot(cabbage_exp, aes(x = Date, y = Weight, fill = Cultivar)) +
+  geom_col(position = "dodge") +
+  ggtitle("Grouped Bar Plot of Cabbage Weights")
+
+# 7. Customizing Bar Plots
+# ------------------------
+# Add black borders and use a color palette.
+ggplot(cabbage_exp, aes(x = Date, y = Weight, fill = Cultivar)) +
+  geom_col(position = "dodge", colour = "black") +
+  scale_fill_brewer(palette = "Pastel1") +
+  ggtitle("Customized Bar Plot with Pastel Colors")
+
+# ==================================================
+# 8. Data Manipulation and Visualization
+# ==================================================
+
+# Load the uspopchange dataset and select the top 10 states by population change.
+library(dplyr)
+data("uspopchange")
+upc <- uspopchange %>%
+  arrange(desc(Change)) %>%
+  slice(1:10)
+View(upc)
+
+# 9. Bar Plot with Custom Colors
+# ------------------------------
+# Plot the top 10 states' population change with custom colors.
+ggplot(upc, aes(x = Abb, y = Change, fill = Region)) +
+  geom_col(colour = "black") +
+  scale_fill_manual(values = c("green", "yellow")) +
+  xlab("State") + ylab("Population Change") +
+  ggtitle("Top 10 States by Population Change")
+
+# ==================================================
+# File: lec_10.R
+# ==================================================
+
+# 10. Using Colors in Bar Graphs
+# ------------------------------
+# Plot the top 10 states' population change with pink and red colors.
+ggplot(upc, aes(x = Abb, y = Change, fill = Region)) +
+  scale_fill_manual(values = c("pink", "red")) +
+  geom_col(color = "black") +
+  xlab("State") + ylab("Population Change") +
+  ggtitle("Top 10 States with Custom Colors")
+
+# 11. Reordering Bars
+# -------------------
+# Reorder bars by population change (ascending and descending).
+ggplot(upc, aes(x = reorder(Abb, Change), y = Change, fill = Region)) +
+  geom_col(color = "blue") +
+  xlab("State") + ylab("Population Change") +
+  ggtitle("States Ordered by Population Change (Ascending)")
+
+ggplot(upc, aes(x = reorder(Abb, -Change), y = Change, fill = Region)) +
+  geom_col(color = "blue") +
+  xlab("State") + ylab("Population Change") +
+  ggtitle("States Ordered by Population Change (Descending)")
+
+# 12. Highlighting Positive and Negative Values
+# ---------------------------------------------
+# Load the climate dataset and filter for Berkeley data from 1900 onwards.
+data("climate")
+climate_sub <- climate %>%
+  filter(Source == "Berkeley" & Year >= 1900) %>%
+  mutate(positive = Anomaly10y >= 0)
+View(climate_sub)
+
+# Plot the climate anomaly data with positive and negative values highlighted.
+ggplot(climate_sub, aes(x = Year, y = Anomaly10y, fill = positive)) +
+  geom_col(color = "black") +
+  scale_fill_manual(values = c("pink", "red")) +
+  ggtitle("Climate Anomaly (Positive and Negative Values)")
+
+# ==================================================
+# File: lect12_bigdata.R
+# ==================================================
+
+# 16. Set Working Directory
+# -------------------------
+getwd()
+setwd("D:/rere/R_Data")
+# Explanation: Sets the working directory to "D:/rere/R_Data".
+
+# 17. Load CSV File
+# -----------------
+read.csv("need_puf_2014.csv")
+# Explanation: Loads the CSV file "need_puf_2014.csv" into a data frame.
+
+# 18. Convert Logical to Integer
+# ------------------------------
+x <- c(T, F, T)  # Logical vector
+x <- as.integer(x)  # Convert logical values to integers
+x
+# Explanation: Converts a logical vector to an integer vector.
+
+# 19. Load and Inspect Data
+# -------------------------
+need0 <- read.csv("need_puf_2014.csv", header = TRUE, sep = ",")
+str(need0)
+colnames(need0)  # Get column names
+class(need0[, 1])  # Check the class of the first column
+
+# 20. Get Classes of All Columns
+# ------------------------------
+yy <- lapply(colnames(need0), function(x) {
+  class(need0[, x])
+})
+yy
+# Explanation: Retrieves the class (data type) of each column.
+
+# 21. Identify and Convert Character Columns
+# ------------------------------------------
+classes <- unlist(lapply(colnames(need0), function(x) {
+  class(need0[, x])
+}))
+ii <- which(classes == "character")  # Find indices of character columns
+ii
+
+for (i in ii) {
+  need0[, i] <- factor(need0[, i])  # Convert character columns to factors
+}
+
+# 22. Identify and Convert Factor Columns
+# ---------------------------------------
+iii <- unlist(lapply(colnames(need0), function(x) {
+  class(need0[, x])
+}))
+ind <- which(iii == "factor")  # Find indices of factor columns
+ind
+
+for (i in ind) {
+  need0[, i] <- as.integer(need0[, i])  # Convert factor columns to integers
+}
+
+# 23. Save Modified Data to CSV
+# -----------------------------
+write.table(need0, "need_data.csv", sep = ",", row.names = FALSE, col.names = TRUE)
+# Explanation: Saves the modified data frame to a new CSV file.
+
+# 24. Load Data Using bigmemory
+# -----------------------------
+library(bigmemory)
+need.matrix <- read.big.matrix("need_data.csv", header = TRUE, sep = ",", 
+                               type = "double", backingfile = "need_data.bin", 
+                               descriptorfile = "need_data.desc")
+# Explanation: Loads the CSV file into a big.matrix object for handling large datasets.
+
+# ==================================================
+# File: lec_13.R
+# ==================================================
+
+# 1. Set Working Directory
+# ------------------------
+setwd("E:/study/Big data")
+# Explanation: Sets the working directory to "E:/study/Big data", where files will be saved or loaded from.
+
+# 2. Convert Logical to Integer
+# -----------------------------
+x <- c(T, F, T)  # Logical vector
+x <- as.integer(x)  # Convert logical values to integers (TRUE -> 1, FALSE -> 0)
+x
+# Explanation: Converts a logical vector to an integer vector for numerical operations.
+
+# 3. Load CSV File
+# ----------------
+need0 <- read.csv("need_puf_2014.csv", header = TRUE, sep = ",")
+str(need0)
+# Explanation: Loads the CSV file "need_puf_2014.csv" into a data frame and displays its structure.
+
+# 4. Check Column Names and Classes
+# ---------------------------------
+colnames(need0)  # Get column names
+class(need0[, 1])  # Check the class of the first column
+# Explanation: Retrieves the column names and checks the data type of the first column.
+
+# 5. Get Classes of All Columns
+# -----------------------------
+yy <- lapply(colnames(need0), function(x) {
+  class(need0[, x])
+})
+yy
+# Explanation: Uses `lapply` to get the class (data type) of each column in the data frame.
+
+# 6. Identify Character Columns
+# -----------------------------
+classes <- unlist(lapply(colnames(need0), function(x) {
+  class(need0[, x])
+}))
+jj <- which(classes == "character")  # Find indices of character columns
+jj
+# Explanation: Identifies columns with the "character" data type.
+
+# 7. Convert Character Columns to Factors
+# ---------------------------------------
+for (i in jj) {
+  need0[, i] <- factor(need0[, i])  # Convert character columns to factors
+}
+# Explanation: Converts character columns to factors for easier manipulation.
+
+# 8. Check Factor Columns
+# -----------------------
+iii <- unlist(lapply(colnames(need0), function(x) {
+  class(need0[, x])
+}))
+ind <- which(iii == "factor")  # Find indices of factor columns
+ind
+# Explanation: Identifies columns that are now factors.
+
+# 9. Convert Factor Columns to Integers
+# -------------------------------------
+for (i in ind) {
+  need0[, i] <- as.integer(need0[, i])  # Convert factor columns to integers
+}
+str(need0)
+# Explanation: Converts factor columns to integers for numerical analysis.
+
+# 10. Save Modified Data to CSV
+# -----------------------------
+write.table(need0, "need_data.csv", sep = ",", row.names = FALSE, col.names = TRUE)
+# Explanation: Saves the modified data frame to a new CSV file.
+
+# 11. Load Data Using bigmemory
+# -----------------------------
+install.packages("bigmemory")
+library(bigmemory)
+
+need.mat <- read.big.matrix("need_data.csv", header = TRUE, sep = ",", 
+                            type = "double", backingfile = "need_data.bin", 
+                            descriptorfile = "need_data.desc")
+# Explanation: Loads the CSV file into a big.matrix object for handling large datasets.
+
+# 12. Analyze Data Using bigtabulate and biganalytics
+# --------------------------------------------------
+install.packages("bigtabulate")
+library(bigtabulate)
+library(biganalytics)
+
+object.size(need.mat)  # Check the size of the big.matrix object
+dim(need.mat)  # Get dimensions of the matrix
+dimnames(need.mat)  # Get row and column names
+head(need.mat)  # View the first few rows of the matrix
+
+# 13. Create Frequency Tables
+# ---------------------------
+bigtable(need.mat, c("PROP_TYPE"))  # Frequency table for PROP_TYPE
+bigtabulate(need.mat, c("PROP_AGE", "PROP_TYPE"))  # Cross-tabulation of PROP_AGE and PROP_TYPE
+bigtable(need.mat, c("PROP_AGE", "PROP_TYPE"))  # Frequency table for PROP_AGE and PROP_TYPE
+
+# 14. Summarize Data
+# ------------------
+summary(need.mat[, "Econs2012"])  # Summary statistics for Econs2012
+summary(need.mat[, 35])  # Summary statistics for the 35th column
+
+# 15. Split Data by Band
+# ----------------------
+need.bands <- bigsplit(need.mat, ccols = "EE_BAND", splitcol = "Econs2012")
+need.bands
+# Explanation: Splits the data based on the "EE_BAND" column and calculates summary statistics for "Econs2012".
+
+# ==================================================
+# File: lect14_bigdata.R
+# ==================================================
+
+# 1. Set Working Directory
+# ------------------------
+getwd()
+setwd("D:/rere/R_Data")
+# Explanation: Sets the working directory to "D:/rere/R_Data", where files will be saved or loaded from.
+
+# 2. Install and Load Required Packages
+# -------------------------------------
+install.packages("ff")  # Install the ff package for working with large datasets
+install.packages("ffbase2")  # Install the ffbase2 package for additional ff functionality
+library(ff)  # Load the ff package
+library(ffbase)  # Load the ffbase package
+library(ffbase2)  # Load the ffbase2 package
+# Explanation: These packages are used to handle large datasets efficiently.
+
+# 3. Create a Directory for ff Data
+# ---------------------------------
+shell("mkdir air_ffdf")  # Create a directory named "air_ffdf"
+options(fftempdir = "d:/rere/R_Data/air_ffdf")  # Set the temporary directory for ff data
+dir_air <- "d:/rere/R_Data/air_ffdf"  # Store the directory path in a variable
+# Explanation: The `ff` package stores data in temporary files, and this directory will hold those files.
+
+# 4. Load Large Dataset Using ff
+# ------------------------------
+ptm <- proc.time()  # Start a timer to measure how long the data loading takes
+airline.ff <- read.table.ffdf(file = "flights_sep_oct15.txt", sep = ",", VERBOSE = TRUE, header = TRUE, next.rows = 100000, colClasses = NA)
+x_time <- proc.time() - ptm  # Calculate the time taken to load the data
+x_time  # Display the time taken
+# Explanation: The `read.table.ffdf` function loads a large dataset into an `ffdf` object, which is optimized for memory efficiency.
+
+# 5. Check File Size
+# ------------------
+file.size("flights_sep_oct15.txt") / 1024 / 1024  # Convert file size to megabytes (MB)
+# Explanation: The file size is calculated in bytes and then converted to MB for easier interpretation.
+
+# 6. Check Object Size
+# --------------------
+object.size(airline.ff)  # Get the size of the `ffdf` object in memory
+format(object.size(airline.ff), "Mb")  # Format the size in MB
+# Explanation: The `object.size` function returns the memory usage of the `ffdf` object.
+
+# 7. List Files in the Temporary Directory
+# ----------------------------------------
+list.files(dir_air)  # List all files in the temporary directory
+length(list.files(dir_air))  # Count the number of files
+# Explanation: The `ff` package stores data in multiple files, and this step lists and counts those files.
+
+# 8. Get File Path and Name
+# -------------------------
+filename(airline.ff$YEAR)  # Get the full file path for the YEAR column
+basename(filename(airline.ff$YEAR))  # Get only the file name (without the path)
+# Explanation: These functions help inspect where the `ff` package stores its data.
+
+# 9. Calculate Maximum Distance
+# -----------------------------
+max(airline.ff$DISTANCE)  # Find the maximum value in the DISTANCE column
+# Explanation: This calculates the longest flight distance in the dataset.
+
+# 10. Categorize Distance into Bins
+# ---------------------------------
+dist_cut <- cut.ff(airline.ff$DISTANCE, breaks = c(0, 150, 300, 450, 600, 750, 900, 1050, 1200, 2000, 5000))
+# Explanation: The `cut.ff` function categorizes the DISTANCE column into bins (e.g., 0-150, 150-300, etc.).
+
+# 11. Create a Frequency Table
+# ----------------------------
+zz <- table.ff(dist_cut)  # Create a frequency table for the binned distances
+zz  # Display the frequency table
+# Explanation: This shows how many flights fall into each distance bin.
+
+# 12. Convert Frequency Table to Data Frame
+# -----------------------------------------
+zz <- as.data.frame(zz)  # Convert the frequency table to a data frame
+zz  # Display the data frame
+# Explanation: Converting to a data frame makes it easier to manipulate and analyze the results.
+
+# 13. Rename Categories and Columns
+# ---------------------------------
+zz$Var1[4:8] <- c("(750,900]", "(900,1050]")  # Rename specific categories
+colnames(zz)[2] <- "number of flights"  # Rename the second column
+colnames(zz)[1] <- "Distance Range"  # Rename the first column
+zz  # Display the updated data frame
+# Explanation: This step improves the readability of the frequency table by renaming categories and columns.
+
+
+# ==================================================
+# 12th Exam Solutions
+# ==================================================
+
+# 1. Import and Export Data
+# -------------------------
+
+# i. Import the R data file dataset.RData
+setwd("e:/r_data")
+load("dataset.rdata")
+cat(dataset$age, file = "age1.txt", sep = ",", append = TRUE)
+cat(dataset$age, file = "age2.csv", sep = ",", append = TRUE)
+write.table(dataset, file="dataset1.txt", append=TRUE, sep=",")
+write.table(dataset, file="dataset2.csv", append=TRUE, sep=",")
+
+# 2. Plotting with ggplot2
+# ------------------------
+
+library(ggplot2)
+data("pressure")
+ggplot(pressure, aes(x=temperature, y=pressure)) +
+geom_line(color="green") +
+geom_point(color="green") +
+
+geom_line(aes(y=pressure/2), color="red") +
+  geom_point(aes(y=pressure/2),color="red") +
+  
+geom_line(aes(y=pressure*2), color="blue") +
+  geom_point(aes(y=pressure*2),color="blue") +
+  
+  labs(x="Temerature", "Pressure")
+
+# 3. Data Visualization with gcookbook
+# ------------------------------------
+
+# i. Install and load gcookbook package
+install.packages("gcookbook")
+library(gcookbook)
+
+# ii. Map Cultivar to x-axis, Weight to y-axis, and Date to fill color
+data("cabbage_exp")  # Load cabbage_exp dataset
+ggplot(cabbage_exp, aes(x = Cultivar, y = Weight, fill = Date)) +
+  geom_col(position = "dodge", colour = "black") +  # Dodged bars with black outline
+  labs(x = "Cultivar", y = "Weight", fill = "Date") +  # Label axes and legend
+  theme_minimal()  # Use minimal theme
+
+# 4. Working with bigmemory Package
+# ---------------------------------
+
+# i. Read the CSV file need_puf2014.csv
+need0 <- read.csv("need_puf2014.csv", stringsAsFactors = FALSE)  # Load CSV file
+
+# ii. Find the classes of all columns
+classes <- unlist(lapply(colnames(need0), function(x) class(need0[, x])))  # Get column classes
+classes  # Display classes
+
+# iii. Change all character columns to factor
+need1 <- need0  # Create a copy of need0
+for (i in which(classes == "character")) {
+  need1[, i] <- factor(need1[, i])  # Convert character columns to factor
+}
+
+# iv. Change all factor columns to integer
+need2 <- need1  # Create a copy of need1
+for (i in which(sapply(need2, is.factor))) {
+  need2[, i] <- as.integer(need2[, i])  # Convert factor columns to integer
+}
+
+# ==================================================
+# End of Solutions
+# ==================================================
+
+# ==================================================
+# Final Exam Solutions
+# ==================================================
+
+# 1. Data Set "mpg" (from tidyverse package)
+# ------------------------------------------
+
+# i. Use table() to categorize models and classes
+library(tidyverse)
+data(mpg)
+table(mpg$model, mpg$class)  # Categorize models and classes
+
+# ii. Drop non-numeric columns and store in mpg_1
+mpg_1 <- mpg %>% select(where(is.numeric))  # Keep only numeric columns
+
+# iii. Write normalize() function
+normalize <- function(x) {
+  (x - min(x)) / (max(x) - max(x))  # Normalize vector x
+}
+
+# iv. Apply normalize() to numeric columns using lapply()
+mpg_n <- as.data.frame(lapply(mpg_1, normalize))  # Normalize all numeric columns
+
+# 2. Large Data Handling
+# ----------------------
+
+# i. Data size vs RAM size
+# - Data size: 2 GB
+# - RAM size: 8 GB
+# - Conclusion: The data is **normal** because it fits comfortably in RAM (2 GB < 8 GB).
+
+# ii. Install required packages
+install.packages("ff")
+install.packages("ffbase")
+install.packages("ffbase2")
+
+# iii. Create directory "airffdf" under working directory
+dir.create("airffdf")  # Create directory
+options(fftempdir = "airffdf")  # Set temporary directory for ff
+
+# iv. Import data using read.table.ffdf()
+library(ff)
+airline.ff <- read.table.ffdf(file = "flights_sep_oct15.txt", sep = ",", header = TRUE)  # Import using ff
+
+# v. Import data using read.table()
+airline_1 <- read.table("flights_sep_oct15.txt", sep = ",", header = TRUE)  # Import using base R
+
+# vi. Compare sizes of ff file and direct reading file
+format(object.size(airline.ff), "MB")  # Size of ff object
+format(object.size(airline_1), "MB")  # Size of base R object
+
+# 3. Machine Learning (Breast Cancer Wisconsin Dataset)
+# ----------------------------------------------------
+
+# i. Read the dataset
+wbcd <- read.csv("wisc_bc_data.csv", stringsAsFactors = FALSE)  # Load dataset
+
+# ii. Drop the ID column (first column)
+wbcd <- wbcd[-1]  # Remove first column
+
+# iii. Recode diagnosis variable as a factor
+wbcd$diagnosis <- factor(wbcd$diagnosis, levels = c("B", "M"), labels = c("Benign", "Malignant"))
+
+# Find the number of Benign and Malignant cases
+table(wbcd$diagnosis)  # Count Benign and Malignant cases
+
+# iv. Normalize numeric columns
+normalize <- function(x) {
+  (x - min(x)) / (max(x) - min(x))  # Normalize function
+}
+wbcd_n <- as.data.frame(lapply(wbcd[2:31], normalize))  # Normalize numeric columns
+
+# v. Split data into training and testing sets
+wbcd_train <- wbcd_n[1:469, ]  # Training data (first 469 rows)
+wbcd_test <- wbcd_n[470:569, ]  # Testing data (remaining 100 rows)
+wbcd_train_labels <- wbcd[1:469, 1]  # Training labels (diagnosis)
+wbcd_test_labels <- wbcd[470:569, 1]  # Testing labels (diagnosis)
+
+# vi. Apply k-NN classification
+library(class)
+wbcd_test_pred <- knn(train = wbcd_train, test = wbcd_test, cl = wbcd_train_labels, k = 21)  # k-NN prediction
+
+# vii. Evaluate model performance
+library(gmodels)
+CrossTable(x = wbcd_test_labels, y = wbcd_test_pred, prop.chisq = FALSE)  # Confusion matrix
+
+# 4. Plotting and User-Defined Functions
+# -------------------------------------
+
+# i. Draw the function y = x^3 - 5x + 1 from x = -5 to x = 5
+curve(x^3 - 5*x + 1, from = -5, to = 5, main = "Plot of y = x^3 - 5x + 1")
+
+# ii. Define a user-defined function myfun(x)
+myfun <- function(xvar) {
+  1 / (1 + exp(-xvar + 10))  # Sigmoid function
+}
+
+# iii. Add the function myfun(x) to the previous plot
+curve(myfun, from = -5, to = 5, add = TRUE, col = "red")  # Add to existing plot
+
+# 5. Data Set "mpg" (Using Pipe Operator)
+# --------------------------------------
+
+# Use pipe operator to filter, select, and plot
+library(tidyverse)
+data("mpg")
+mpg %>%
+  filter(cty > 25) %>%  # Filter rows where cty > 25
+  select(cty, hwy) %>%  # Select columns cty and hwy
+  ggplot(aes(x = cty, y = hwy)) + geom_point()  # Create scatter plot
+
+# 6. Data Set "uspopchange" (gcookbook package)
+# ---------------------------------------------
+
+# i. Install and load gcookbook package
+install.packages("gcookbook")
+library(gcookbook)
+data("uspopchange")
+
+# ii. Create object "upc" with top 25 fastest growing states
+library(dplyr)
+upc <- uspopchange %>%
+  arrange(desc(Change)) %>%  # Sort by Change in descending order
+  slice(1:25)  # Select top 25 rows
+
+# iii. Graph percentage change vs Abb, color by Region
+ggplot(upc, aes(x = Abb, y = Change, fill = Region)) +
+  geom_col(colour = "black") +  # Bar plot with black outline
+  scale_fill_manual(values = c("Northeast" = "blue", "South" = "green", "North Central" = "red", "West" = "yellow")) +  # Custom colors
+  xlab("State") + ylab("Population Change") +  # Change axis labels
+  ggtitle("Top 25 Fastest Growing States")  # Add title
+
+# ==================================================
+# End of Solutions
+# ==================================================
+
+
+# ==================================================
+# 7th Exam Solutions
+# ==================================================
+
+# 1. Vector Operations
+# --------------------
+
+# Given vector die
+die <- 1:6  # Vector from 1 to 6
+
+# Results of operations:
+die + 1:4  # Recycling occurs: 2 4 6 5 7 9
+die * die  # Element-wise multiplication: 1 4 9 16 25 36
+die %*% die  # Dot product: 91
+die %o% die  # Outer product: 6x6 matrix
+
+# 2. Create and Subset Data Frame
+# -------------------------------
+
+# Create data frame
+df <- data.frame(A = 1:5, B = LETTERS[1:5], C = c(TRUE, FALSE, TRUE, FALSE, TRUE))
+
+# Subset rows where A > 2 and C is TRUE
+subset_df <- df[df$A > 2 & df$C == TRUE, ]
+
+# 3. Function and Apply Family
+# ----------------------------
+
+# i. Define square function
+square <- function(x) {
+  x^2  # Square each element
+}
+
+# ii. Use lapply to square each value in the list
+num_list <- list(a = 1:3, b = 4:6, c = 7:9)
+result_lapply <- lapply(num_list, square)  # Output: list(a = c(1, 4, 9), b = c(16, 25, 36), c = c(49, 64, 81))
+
+# iii. Use sapply to square each value in the list
+result_sapply <- sapply(num_list, square)  # Output: matrix with squared values
+
+# iv. Difference between lapply and sapply
+# - lapply returns a list.
+# - sapply simplifies the output to a vector or matrix if possible.
+
+# 4. Machine Learning (Breast Cancer Wisconsin Dataset)
+# ----------------------------------------------------
+
+# i. Read the dataset
+wbcd <- read.csv("wisc_bc_data.csv", stringsAsFactors = FALSE)  # Load dataset
+
+# ii. Drop the ID column (first column)
+wbcd <- wbcd[-1]  # Remove first column
+
+# iii. Recode diagnosis variable as a factor
+wbcd$diagnosis <- factor(wbcd$diagnosis, levels = c("B", "M"), labels = c("Benign", "Malignant"))
+
+# iv. Find the number of Benign and Malignant cases
+table(wbcd$diagnosis)  # Count Benign and Malignant cases
+
+# v. Create normalize function
+normalize <- function(x) {
+  (x - min(x)) / (max(x) - min(x))  # Normalize vector x
+}
+
+# vi. Normalize all 30 numeric variables using lapply()
+wbcd_n <- as.data.frame(lapply(wbcd[2:31], normalize))  # Normalize numeric columns
+
+# vii. Split data into training and testing sets
+set.seed(123)  # For reproducibility
+index <- sample(1:nrow(wbcd_n), size = 0.7 * nrow(wbcd_n))  # 70% for training
+train_data <- wbcd_n[index, ]  # Training data
+test_data <- wbcd_n[-index, ]  # Testing data
+
+# ==================================================
+# End of Solutions
+# ==================================================
